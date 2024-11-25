@@ -17,17 +17,23 @@ const Login = () => {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("customer");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // TODO: Implement actual authentication logic here
-    // For now, we'll simulate a login based on the selected role
-    
+    // For now, we'll simulate a login and determine role based on email domain
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Determine role based on email domain (for demonstration purposes)
+      let role: UserRole = "customer";
+      if (email.endsWith("@restaurant.com")) {
+        role = "restaurant_owner";
+      } else if (email.endsWith("@delivery.com")) {
+        role = "delivery_guy";
+      }
       
       // Store user info in localStorage (replace with proper auth later)
       localStorage.setItem('user', JSON.stringify({
@@ -91,17 +97,6 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-            <div>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-              >
-                <option value="customer">Customer</option>
-                <option value="restaurant_owner">Restaurant Owner</option>
-                <option value="delivery_guy">Delivery Guy</option>
-              </select>
             </div>
             <Button type="submit" className="w-full">
               Sign in
