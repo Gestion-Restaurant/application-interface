@@ -11,23 +11,31 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Link, useNavigate } from 'react-router-dom';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { UserRole } from '@/types/auth';
 
-function Register() {
+function Partner() {
     const navigate = useNavigate();
     const { toast } = useToast();
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [name, setName] = React.useState('');
-
+    const [role, setRole] = React.useState<UserRole>('delivery');
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             // Call register API
-            await register(email, password, name);
+            await register(email, password, name, role);
             toast({
                 title: 'Register successful',
-                description: `Welcome! You are registered as a client`,
+                description: `Welcome! You are registered as a partner`,
             });
 
             // Redirect to login page
@@ -65,7 +73,7 @@ function Register() {
                     <div>
                         <Input
                             type="email"
-                            placeholder="Email address"
+                            placeholder="Email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -80,22 +88,34 @@ function Register() {
                             required
                         />
                     </div>
-                    <Button type="submit" className="w-full">
-                        Sign up
+                    <div>
+                        <Select
+                            defaultValue="delivery"
+                            onValueChange={(value) => setRole(value.toLowerCase() as UserRole)}
+                            required
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="delivery">Delivery</SelectItem>
+                                <SelectItem value="chef">Chef</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button type="submit" variant="default" className="w-full">
+                        Register
                     </Button>
+                    <div className="text-center">
+                        <Link to="/login" className="text-sm text-primary">
+                            Already have an account? Login
+                        </Link>
+                    </div>
                 </form>
-                <div className="mt-4 text-center">
-                    <p className="text-sm text-gray-600">
-                    Already have an account?{" "}
-                    <Link to="/login" className="font-medium text-primary hover:text-primary/90">
-                        Login
-                    </Link>
-                    </p>
-                </div>
                 </CardContent>
             </Card>
         </div>
-    )
+    );
 }
 
-export default Register;
+export default Partner;

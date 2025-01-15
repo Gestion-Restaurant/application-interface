@@ -1,4 +1,4 @@
-import { LoginResponse, UserRole } from "@/types/auth";
+import { LoginResponse, UserRole, UserRoleEnum } from "@/types/auth";
 import Cookies from 'js-cookie'
 
 const TOKEN_KEY = 'auth_token'
@@ -63,4 +63,35 @@ export const removeAuthToken = () => {
 
 export const isAuthenticated = () => {
     return !!getAuthToken();
+}
+
+export const isClient = () => {
+    if (!isAuthenticated()) {
+        return false;
+    }
+    return getRole() === UserRoleEnum.CLIENT;
+}
+
+export const isRestaurant = () => {
+    if (!isAuthenticated()) {
+        return false;
+    }
+    return getRole() === UserRoleEnum.CHEF;
+}
+
+export const isDelivery = () => {
+    if (!isAuthenticated()) {
+        return false;
+    }
+    return getRole() === UserRoleEnum.DELIVERY;
+}
+
+export const getRole = () => {
+    const token = getAuthToken();
+    if (!token) {
+        return null;
+    }
+    const payload = token.split('.')[1];
+    const data = JSON.parse(atob(payload));
+    return data.role;
 }
