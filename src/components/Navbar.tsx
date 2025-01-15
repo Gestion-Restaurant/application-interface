@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { isAuthenticated, logout } from "@/services/auth.service";
 import { Link } from "react-router-dom";
 
 const Navbar = () => {
@@ -19,9 +20,16 @@ const Navbar = () => {
             <Button variant="ghost" asChild>
               <Link to="/partner">Partner with Us</Link>
             </Button>
-            <Button asChild>
-              <Link to="/login">Login</Link>
-            </Button>
+            {
+              !isAuthenticated() ?
+              <Button asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              :
+              <Button asChild onClick={() => logout()}>
+                <a href="/">Log out</a>
+              </Button>
+            }
           </div>
         </div>
       </div>

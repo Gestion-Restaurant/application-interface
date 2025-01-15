@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { UserRole } from "@/types/auth";
+import { UserRoleEnum } from "@/types/auth";
+import { login, setAuthToken, reloadPage } from "@/services/auth.service";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -21,28 +22,16 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Implement actual authentication logic here
-    // For now, we'll simulate a login and determine role based on email domain
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Determine role based on email domain (for demonstration purposes)
-      let role: UserRole = "customer";
-      if (email.endsWith("@restaurant.com")) {
-        role = "restaurant_owner";
-      } else if (email.endsWith("@delivery.com")) {
-        role = "delivery_guy";
-      }
-      
-      // Store user info in localStorage (replace with proper auth later)
-      localStorage.setItem('user', JSON.stringify({
-        id: '1',
-        email,
-        role,
-        name: 'John Doe'
-      }));
+      // Call login API
+      const response = await login(email, password);
 
+      // Store token in cookies
+      setAuthToken(response.data.token);
+
+      // Extract user role
+      const role = response.data.user.role;
+      
       toast({
         title: "Login successful",
         description: `Welcome back! You are logged in as a ${role.replace('_', ' ')}`,
@@ -50,21 +39,23 @@ const Login = () => {
 
       // Redirect based on role
       switch (role) {
-        case 'restaurant_owner':
+        case UserRoleEnum.CHEF:
           navigate('/restaurant/dashboard');
           break;
-        case 'delivery_guy':
+        case UserRoleEnum.DELIVERY:
           navigate('/delivery/dashboard');
           break;
-        case 'customer':
+        case UserRoleEnum.CLIENT:
           navigate('/restaurants');
           break;
       }
+      reloadPage();
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to login. Please try again.",
+        description: error.message,
       });
     }
   };
@@ -102,8 +93,18 @@ const Login = () => {
               Sign in
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link to="/register" className="font-medium text-primary hover:text-primary/90">
+                Register
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
+
+      
     </div>
   );
 };
