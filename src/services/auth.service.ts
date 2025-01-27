@@ -1,16 +1,19 @@
+import { environment } from "@/environment/environment";
 import { LoginResponse, UserRole, UserRoleEnum } from "@/types/auth";
-import Cookies from 'js-cookie'
+import Cookies from 'js-cookie';
 
-const TOKEN_KEY = 'auth_token'
+const TOKEN_KEY = 'auth_token';
 const COOKIE_OPTIONS = {
     expires: 1, // Cookie expires in 7 days
     secure: process.env.NODE_ENV === 'production', // Use secure in production
     sameSite: 'strict',
     path: '/'
-}
+};
+
+const API_BASE_URL = environment.apiEndpoint;
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
-    const response = await fetch(`http://localhost:3000/api/v1/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/customers/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -26,7 +29,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 }
 
 export const register = async (email: string, password: string, name: string, role: UserRole = 'client'): Promise<LoginResponse> => {
-    const response = await fetch(`http://localhost:3000/api/v1/auth/register`, {
+    const response = await fetch(`${API_BASE_URL}/customers/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -25,15 +25,15 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#1E40AF",
+          DEFAULT: "#9b87f5",
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#FB923C",
-          foreground: "#1F2937",
+          DEFAULT: "#F97316",
+          foreground: "#FFFFFF",
         },
         accent: {
-          DEFAULT: "#0D9488",
+          DEFAULT: "#0EA5E9",
           foreground: "#FFFFFF",
         },
         destructive: {
@@ -41,16 +41,16 @@ export default {
           foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "#F1F0FB",
+          foreground: "#6B7280",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "#FFFFFF",
+          foreground: "#111827",
         },
       },
       borderRadius: {
@@ -76,6 +76,10 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
+      },
+      backgroundImage: {
+        'gradient-warm': 'linear-gradient(to right, #ee9ca7, #ffdde1)',
+        'gradient-cool': 'linear-gradient(109.6deg, rgba(223,234,247,1) 11.2%, rgba(244,248,252,1) 91.1%)',
       },
     },
   },

@@ -14,61 +14,68 @@ import { PublicRoute } from "./components/PublicRoute";
 import { KitchenRoute } from "./components/KitchenRoute";
 import { DeliveryRoute } from "./components/DeliveryRoute";
 import Partner from "./pages/Partner";
+import RestaurantsPage from "./pages/RestaurantsPage";
+import RestaurantDishes from "./pages/RestaurantDishes";
+import { CartProvider } from "./contexts/CartContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
+      <CartProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+              />
+            <Route path="/menu" element={<MenuPage />} />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              }
             />
-          <Route path="/menu" element={<MenuPage />} />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
-                <Register />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/restaurant/dashboard"
-            element={
-              <KitchenRoute>
-                <KitchenDashboard />
-              </KitchenRoute>
-            }
-          />
-          <Route
-            path="/delivery/dashboard"
-            element={
-              <DeliveryRoute>
-                <DeliveryDashboard />
-              </DeliveryRoute>
-            }
-          />
-          <Route
-            path="/partner"
-            element={
-              <PublicRoute>
-                <Partner />
-              </PublicRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
+            <Route
+              path="/restaurant/dashboard"
+              element={
+                <KitchenRoute>
+                  <KitchenDashboard />
+                </KitchenRoute>
+              }
+            />
+            <Route
+              path="/delivery/dashboard"
+              element={
+                <DeliveryRoute>
+                  <DeliveryDashboard />
+                </DeliveryRoute>
+              }
+            />
+            <Route
+              path="/partner"
+              element={
+                <PublicRoute>
+                  <Partner />
+                </PublicRoute>
+              }
+            />
+            <Route path="/restaurants" element={<RestaurantsPage />} />
+            <Route path="/restaurants/:id/dishes" element={<RestaurantDishes />} />
+          </Routes>
+        </BrowserRouter>
+      </CartProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
