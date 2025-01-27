@@ -27,12 +27,22 @@ function Partner() {
     const [password, setPassword] = React.useState('');
     const [name, setName] = React.useState('');
     const [role, setRole] = React.useState<UserRole>('delivery');
+    const [address, setAddress] = React.useState('');
+    const [description, setDescription] = React.useState('');
+    const [openingTime, setOpeningTime] = React.useState('');
+    const [closingTime, setClosingTime] = React.useState('');
+
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             // Call register API
-            await register(email, password, name, role);
+            if (role === 'chef') {
+                // Call register API for chef
+                await register(email, password, name, role, address, description, openingTime, closingTime);
+            } else {
+                await register(email, password, name, role);
+            }
             toast({
                 title: 'Register successful',
                 description: `Welcome! You are registered as a partner`,
@@ -87,6 +97,46 @@ function Partner() {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
+                    </div>
+                    <div>
+                        {role === 'chef' && (
+                            <Input
+                                type="text"
+                                placeholder="Address"
+                                onChange={(e) => setAddress(e.target.value)}
+                                required
+                            />
+                        )}
+                    </div>
+                    <div>
+                        {role === 'chef' && (
+                            <Input
+                                type="text"
+                                placeholder="Description"
+                                onChange={(e) => setDescription(e.target.value)}
+                                required
+                            />
+                        )}
+                    </div>
+                    <div>
+                        {role === 'chef' && (
+                            <Input
+                                type="text"
+                                placeholder="Opening Time"
+                                onChange={(e) => setOpeningTime(e.target.value)}
+                                required
+                            />
+                        )}
+                    </div>
+                    <div>
+                        {role === 'chef' && (
+                            <Input
+                                type="text"
+                                placeholder="Closing Time"
+                                onChange={(e) => setClosingTime(e.target.value)}
+                                required
+                            />
+                        )}
                     </div>
                     <div>
                         <Select

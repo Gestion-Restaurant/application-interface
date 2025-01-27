@@ -28,13 +28,14 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     return response.json().then((data) => {return data as LoginResponse});
 }
 
-export const register = async (email: string, password: string, name: string, role: UserRole = 'client'): Promise<LoginResponse> => {
+export const register = async (email: string, password: string, name: string, role: UserRole = 'client', address?: string, description?: string, openingTime?: string, closingTime?: string): Promise<LoginResponse> => {
     const response = await fetch(`${API_BASE_URL}/customers/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name, role }),
+        body: role !== 'chef' ? JSON.stringify({ email, password, name, role }) :
+            JSON.stringify({ email, password, name, role, address, description, openingTime, closingTime }),
     });
     
     if (!response.ok) {
