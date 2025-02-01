@@ -84,14 +84,14 @@ const KitchenDashboard = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Items:</h3>
                   <ul className="space-y-2">
-                    {order.items.map((item, index) => (
-                      <li key={index}>
+                    {order.items.map((item) => (
+                      <li key={`${order.id}-${item.name}`}>
                         {item.quantity}x {item.name}
                       </li>
                     ))}
                   </ul>
                 </div>
-
+                
                 <div className="flex space-x-2">
                   <Button
                     onClick={() => updateOrderStatus(order.id, "preparing")}

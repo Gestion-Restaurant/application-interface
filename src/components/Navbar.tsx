@@ -36,9 +36,18 @@ const Navbar = () => {
             <Button variant="ghost" asChild>
               {!isRestaurant() && !isDelivery() ? <Link to="/restaurants">Restaurants</Link> : '' }
             </Button>
-            <Button variant="ghost" asChild>
-              <Link to="/orders">Orders</Link>
-            </Button>
+            {
+              isRestaurant() ?
+              <>
+                <Button variant="ghost" asChild>
+                  <Link to="/restaurant/dashboard">Orders</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/restaurant/menu">Dishes</Link>
+                </Button>
+              </>
+              : ''
+            }
             <Button variant="ghost" asChild>
               {!isAuthenticated() ? <Link to="/partner">Partner with Us</Link> : ''}
             </Button>
