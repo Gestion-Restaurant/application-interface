@@ -4,18 +4,17 @@ import { Clock, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import IUser from "@/types/userInterface";
+import { environment } from "@/environment/environment";
 
 const RestaurantsPage = () => {
     const navigate = useNavigate();
     const [restaurants, setRestaurants] = useState<IUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const REACT_APP_API_BASE_URL = "http://localhost:8000";
-
     useEffect(() => {
         const fetchRestaurants = async () => {
             try {
-                const response = await fetch(`${REACT_APP_API_BASE_URL}/customers/chef`);
+                const response = await fetch(`${environment.apiEndpoint}/customers/chef`);
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch restaurants');
@@ -34,7 +33,7 @@ const RestaurantsPage = () => {
     }, []);
     
     if (isLoading) {
-        return <div>Loading restaurants...</div>;
+        return <div className="container mx-auto py-8 px-4"><h1>Loading restaurants...</h1></div>;
     } else {
         return (
             <div className="container mx-auto py-8 px-4">
@@ -42,31 +41,31 @@ const RestaurantsPage = () => {
                 <ScrollArea className="h-[calc(100vh-200px)]">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {restaurants.map((restaurant) => (
-                        <Card 
-                        key={restaurant._id}
-                        className="card-container cursor-pointer group"
-                        onClick={() => navigate(`/restaurants/${restaurant._id}/dishes`)}
+                        <Card
+                            key={restaurant._id}
+                            className="card-container cursor-pointer group"
+                            onClick={() => navigate(`/restaurants/${restaurant._id}/dishes`)}
                         >
                             <CardHeader>
                                 <CardTitle className="text-xl group-hover:text-primary transition-colors">
-                                {restaurant.name}
+                                    {restaurant.name}
                                 </CardTitle>
                                 <CardDescription className="text-gray-600">
-                                {restaurant.description}
+                                    {restaurant.description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-2 text-sm">
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <MapPin className="h-4 w-4 text-secondary" />
-                                    <span>{restaurant.address}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <Clock className="h-4 w-4 text-secondary" />
-                                    <span>
-                                    {restaurant.openingTime} - {restaurant.closingTime}
-                                    </span>
-                                </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                        <MapPin className="h-4 w-4 text-secondary" />
+                                        <span>{restaurant.address}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                        <Clock className="h-4 w-4 text-secondary" />
+                                        <span>
+                                            {restaurant.openingTime} - {restaurant.closingTime}
+                                        </span>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

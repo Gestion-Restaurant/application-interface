@@ -5,13 +5,64 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Minus, Plus, ShoppingCart, X } from "lucide-react";
 import { CheckoutDialog } from "./CheckoutDialog";
+import { environment } from "@/environment/environment";
+import { getAuthToken } from "@/services/auth.service";
+import JWTPayload from "@/types/JWTPayload";
+import { jwtDecode } from "jwt-decode";
+import { useToast } from "@/components/ui/use-toast";
 
-export const Cart = () => {
+export const Cart = ({ restaurantId }: { restaurantId: string }) => {
     const { items, removeFromCart, updateQuantity, total, clearCart } = useCart();
     const [checkoutOpen, setCheckoutOpen] = useState(false);
 
-    const handleCheckoutSuccess = () => {
-        clearCart();
+    const { toast } = useToast();
+    const token = getAuthToken();
+    const decodedToken = token ? jwtDecode<JWTPayload>(token) : null;
+    const clientId = decodedToken?.id;
+
+    const checkOut = async () => {
+        try {
+            const response = await fetch(
+                `${environment.apiEndpoint}/orders`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        clientId,
+                        restaurantId,
+                        items,
+                        totalAmount: total,
+                    }),
+                }
+            );
+            if (!response.ok) {
+                console.error("Failed to create order");
+                toast({
+                    title: "Error",
+                    description: "Failed to create order",
+                    variant: "destructive",
+                });
+                throw new Error("Failed to create order");
+            }
+            toast({
+                title: "Order created",
+                description: "Your order has been created successfully"
+            });
+            clearCart();
+    } catch (error) {
+            console.error("Error creating order:", error);
+            toast({
+                title: "Error",
+                description: "Failed to create order",
+                variant: "destructive",
+            });
+        }
+    };
+    
+    const handleCheckoutSuccess = async () => {
+        await checkOut();
     };
 
     if (items.length === 0) {
@@ -43,7 +94,7 @@ export const Cart = () => {
                     <div className="space-y-4">
                         {items.map((item) => (
                         <div
-                            key={item.id}
+                            key={item.itemId}
                             className="flex items-center justify-between space-x-4"
                         >
                             <div className="flex-1">
@@ -57,7 +108,7 @@ export const Cart = () => {
                                     variant="outline"
                                     size="icon"
                                     className="h-8 w-8"
-                                    onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                                    onClick={() => updateQuantity(item.itemId, Math.max(0, item.quantity - 1))}
                                 >
                                     <Minus className="h-4 w-4" />
                                 </Button>
@@ -66,7 +117,7 @@ export const Cart = () => {
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                onClick={() => updateQuantity(item.itemId, item.quantity + 1)}
                             >
                                 <Plus className="h-4 w-4" />
                             </Button>
@@ -74,7 +125,7 @@ export const Cart = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
-                                onClick={() => removeFromCart(item.id)}
+                                onClick={() => removeFromCart(item.itemId)}
                             >
                                 <X className="h-4 w-4" />
                             </Button>

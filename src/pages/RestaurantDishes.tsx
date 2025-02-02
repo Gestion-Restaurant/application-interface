@@ -8,6 +8,7 @@ import { useCart } from "@/contexts/CartContext";
 import { Cart } from "@/components/Cart";
 import { useToast } from "@/components/ui/use-toast";
 import IDish from "@/types/dishInterface";
+import { environment } from "@/environment/environment";
 
 // Mock data - In a real app, this would be filtered by restaurantId from an API
 
@@ -29,7 +30,7 @@ const RestaurantDishes = () => {
     useEffect(() => {
         const fetchDishes = async () => {
             try {
-                const response = await fetch(`http://localhost:8000/kitchen/dishes/restaurant/${id}`);
+                const response = await fetch(`${environment.apiEndpoint}/kitchen/dishes/restaurant/${id}`);
     
                 if (!response.ok) {
                     throw new Error('Failed to fetch dishes');
@@ -49,7 +50,7 @@ const RestaurantDishes = () => {
         const quantity = quantities[dish._id] || 0;
         if (quantity > 0) {
             addToCart({
-                id: dish._id,
+                itemId: dish._id,
                 name: dish.name,
                 price: dish.price,
                 restaurantId: dish.restaurantId
@@ -131,7 +132,7 @@ const RestaurantDishes = () => {
                     </ScrollArea>
                 </div>
                 <div className="lg:col-span-1">
-                    <Cart />
+                    <Cart restaurantId={id} />
                 </div>
             </div>
         </div>

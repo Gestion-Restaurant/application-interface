@@ -26,6 +26,8 @@ import * as z from "zod";
 import IDish from "@/types/dishInterface";
 import { jwtDecode } from "jwt-decode";
 import { getAuthToken } from "@/services/auth.service";
+import { environment } from "@/environment/environment";
+import JWTPayload from "@/types/JWTPayload";
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -35,32 +37,34 @@ const formSchema = z.object({
     }),
 });
 
-interface JWTPayload {
-    id: string;
-    email: string;
-    role: string;
-    iat: number;
-    exp: number;
-}
-
 const ManageDishes = () => {
     const token = getAuthToken();
     const decodedToken = token ? jwtDecode<JWTPayload>(token) : null;
     const restaurantId = decodedToken?.id;
     
     const { toast } = useToast();
-    const [dishes, setDishes] = useState<IDish[]>([
-        {
-            _id: "1",
-            name: "Margherita Pizza",
-            description: "Fresh tomatoes, mozzarella, and basil",
-            price: 12.99,
-            isAvailable: true,
-            restaurantId: restaurantId,
-        },
-    ]);
+    const [dishes, setDishes] = useState<IDish[]>([]);
     const [editingDish, setEditingDish] = useState<IDish | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchDishes = async () => {
+            try {
+                const response = await fetch(`${environment.apiEndpoint}kitchen/dishes/restaurant/${restaurantId}`);
+    
+                if (!response.ok) {
+                    throw new Error('Failed to fetch dishes');
+                }
+    
+                const data = await response.json();
+                setDishes(data.dishes || []);
+            } catch (error) {
+                console.error('Error fetching dishes:', error);
+            }
+        };
+    
+        fetchDishes();
+    }, [restaurantId]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -71,36 +75,48 @@ const ManageDishes = () => {
         },
     });
 
-    const onSubmit = (values: z.infer<typeof formSchema>) => {
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
         if (editingDish) {
-            setDishes((prev) =>
-                prev.map((dish) =>
-                    dish._id === editingDish._id
-                    ? {
-                        ...dish,
+            try {
+                const response = await fetch(`${environment.apiEndpoint}/kitchen/dishes/${editingDish._id}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": getAuthToken() || ''
+                    },
+                    body: JSON.stringify({
                         name: values.name,
                         description: values.description,
                         price: Number(values.price),
-                    }
-                    : dish
-                )
-            );
-            fetch(`http://localhost:8000/kitchen/dishes/${editingDish._id}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                }, // put in authorization headers the jwt stocked in cookies
-
-                body: JSON.stringify({
-                    name: values.name,
-                    description: values.description,
-                    price: Number(values.price),
-                }),
-            })
-            toast({
-                title: "Dish updated",
-                description: "The dish has been successfully updated.",
-            });
+                        restaurantId: restaurantId,
+                    }),
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to update dish');
+                }
+                
+                const updatedDish = await response.json();
+                setDishes(dishes.map(dish =>
+                    dish._id === editingDish._id ? updatedDish.dish : dish
+                ));
+                
+                toast({
+                    title: "Success",
+                    description: "Dish updated successfully",
+                });
+                
+                setIsDialogOpen(false);
+                setEditingDish(null);
+                form.reset();
+            } catch (error) {
+                console.error('Error updating dish:', error);
+                toast({
+                    title: "Error",
+                    description: "Failed to update dish",
+                    variant: "destructive"
+                });
+            }
         } else {
             const newDish: IDish = {
                 _id: Math.random().toString(36).substr(2, 9),
@@ -108,13 +124,43 @@ const ManageDishes = () => {
                 description: values.description,
                 price: Number(values.price),
                 isAvailable: true,
-                restaurantId: "1",
+                restaurantId: restaurantId,
             };
-            setDishes((prev) => [...prev, newDish]);
-            toast({
-                title: "Dish added",
-                description: "The new dish has been successfully added.",
-            });
+            const addDish = async () => {
+                try {
+                    const response = await fetch(`${environment.apiEndpoint}/kitchen/dishes`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": getAuthToken() || ''
+                        },
+                        body: JSON.stringify(newDish),
+                    });
+            
+                    if (!response.ok) {
+                        throw new Error('Failed to add dish');
+                    }
+            
+                    const data = await response.json();
+                    setDishes((prev) => [...prev, data]);
+                    toast({
+                        title: "Dish added",
+                        description: "The dish has been successfully added.",
+                    });
+                } catch (error) {
+                    console.error('Error adding dish:', error);
+                    toast({
+                        title: "Error",
+                        description: "Failed to add dish",
+                        variant: "destructive"
+                    });
+                }
+            };
+            try {
+                await addDish();
+            } catch (error) {
+                console.error('Error adding dish:', error);
+            }
         }
         form.reset();
         setEditingDish(null);
@@ -132,11 +178,34 @@ const ManageDishes = () => {
     };
 
     const handleDelete = (id: string) => {
-        setDishes((prev) => prev.filter((dish) => dish._id !== id));
-        toast({
-            title: "Dish deleted",
-            description: "The dish has been successfully removed.",
-        });
+        const deleteDish = async () => {
+            try {
+                const response = await fetch(`${environment.apiEndpoint}/kitchen/dishes/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": getAuthToken() || ''
+                    },
+                });
+        
+                if (!response.ok) {
+                    throw new Error('Failed to delete dish');
+                }
+        
+                setDishes((prev) => prev.filter((dish) => dish._id !== id));
+                toast({
+                    title: "Dish deleted",
+                    description: "The dish has been successfully deleted.",
+                });
+            } catch (error) {
+                console.error('Error deleting dish:', error);
+                toast({
+                    title: "Error",
+                    description: "Failed to delete dish",
+                    variant: "destructive"
+                });
+            }
+        };
+        deleteDish();
     };
 
     const toggleAvailability = (id: string) => {

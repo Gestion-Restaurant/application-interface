@@ -39,7 +39,6 @@ const App = () => (
                 </PublicRoute>
               }
               />
-            <Route path="/menu" element={<MenuPage />} />
             <Route
               path="/register"
               element={

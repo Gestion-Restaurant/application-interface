@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +45,10 @@ const DeliveryDashboard = () => {
       description: `Order #${orderId} status changed to ${newStatus.replace('_', ' ')}`
     });
   };
+
+  useEffect(() => {
+    
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">

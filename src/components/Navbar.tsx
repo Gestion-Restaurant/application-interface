@@ -43,7 +43,7 @@ const Navbar = () => {
                   <Link to="/restaurant/dashboard">Orders</Link>
                 </Button>
                 <Button variant="ghost" asChild>
-                  <Link to="/restaurant/menu">Dishes</Link>
+                  <Link to="/restaurant/dishes">Dishes</Link>
                 </Button>
               </>
               : ''
