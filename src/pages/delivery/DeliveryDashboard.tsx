@@ -2,41 +2,41 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { DeliveryStatus } from "@/types/deliveryStatusEnum";
+import { environment } from "@/environment/environment";
 
 interface DeliveryOrder {
-  id: string;
-  customerName: string;
+  _id: string;
+  clientId: string;
+  deliveryPersonId: string;
   address: string;
-  items: Array<{
-    name: string;
-    quantity: number;
-  }>;
-  status: "ready" | "picked_up" | "delivering" | "delivered";
-  orderTime: string;
+  status: DeliveryStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  orderId: string;
 }
 
 const SAMPLE_DELIVERY_ORDERS: DeliveryOrder[] = [
   {
-    id: "1",
-    customerName: "John Doe",
+    _id: "1",
     address: "123 Main St, City",
-    items: [
-      { name: "Margherita Pizza", quantity: 2 },
-      { name: "Caesar Salad", quantity: 1 }
-    ],
-    status: "ready",
-    orderTime: "2024-02-20T10:30:00"
+    status: DeliveryStatus.READY_FOR_DELIVERY,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    clientId: "1",
+    deliveryPersonId: "1",
+    orderId: "1"
   }
 ];
 
 const DeliveryDashboard = () => {
   const { toast } = useToast();
-  const [deliveries, setDeliveries] = useState<DeliveryOrder[]>(SAMPLE_DELIVERY_ORDERS);
+  const [deliveries, setDeliveries] = useState<DeliveryOrder[]>([]);
 
   const updateDeliveryStatus = (orderId: string, newStatus: DeliveryOrder["status"]) => {
     setDeliveries(prevDeliveries =>
       prevDeliveries.map(delivery =>
-        delivery.id === orderId ? { ...delivery, status: newStatus } : delivery
+        delivery._id === orderId ? { ...delivery, status: newStatus } : delivery
       )
     );
 
@@ -47,8 +47,33 @@ const DeliveryDashboard = () => {
   };
 
   useEffect(() => {
-    
-  });
+    const fetchDeliveries = async () => {
+      try {
+        const response = await fetch(`${environment.apiEndpoint}/delivery`,
+          {
+            headers: {
+              "Content-Type": "application/json"
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch deliveries");
+        }
+
+        const data = await response.json();
+        setDeliveries(data);
+      } catch (error) {
+        console.error("Error fetching deliveries", error);
+      }
+    };
+
+    fetchDeliveries();
+
+    const interfalId = setInterval(fetchDeliveries, 5000);
+
+    return () => clearInterval(interfalId);
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,45 +81,23 @@ const DeliveryDashboard = () => {
       
       <div className="grid gap-6">
         {deliveries.map((delivery) => (
-          <Card key={delivery.id}>
+          <Card key={delivery.orderId}>
             <CardHeader>
-              <CardTitle>Order #{delivery.id}</CardTitle>
+              <CardTitle>Order #{delivery.orderId.substring(delivery.orderId.length-4, delivery.orderId.length)}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <p className="font-semibold">Customer: {delivery.customerName}</p>
                   <p className="text-gray-600">{delivery.address}</p>
                   <p className="text-sm text-gray-600">
-                    Ordered at: {new Date(delivery.orderTime).toLocaleString()}
+                    Ordered at: {new Date(delivery.createdAt).toLocaleString()}
                   </p>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-2">Items:</h3>
-                  <ul className="space-y-2">
-                    {delivery.items.map((item, index) => (
-                      <li key={index}>
-                        {item.quantity}x {item.name}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
 
                 <div className="flex space-x-2">
-                  {delivery.status === "ready" && (
-                    <Button onClick={() => updateDeliveryStatus(delivery.id, "picked_up")}>
-                      Pick Up Order
-                    </Button>
-                  )}
-                  {delivery.status === "picked_up" && (
-                    <Button onClick={() => updateDeliveryStatus(delivery.id, "delivering")}>
-                      Start Delivery
-                    </Button>
-                  )}
-                  {delivery.status === "delivering" && (
-                    <Button onClick={() => updateDeliveryStatus(delivery.id, "delivered")}>
-                      Mark as Delivered
+                  {delivery.status === DeliveryStatus.READY_FOR_DELIVERY && (
+                    <Button onClick={() => updateDeliveryStatus(delivery.orderId, DeliveryStatus.ASSIGNED)}>
+                      Assign to me
                     </Button>
                   )}
                 </div>

@@ -1,58 +1,106 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { DeliveryStatus } from "@/types/deliveryStatusEnum";
+import { environment } from "@/environment/environment";
+import { getAuthToken } from "@/services/auth.service";
+import { jwtDecode } from "jwt-decode";
+import JWTPayload from "@/types/JWTPayload";
 
 interface Order {
-  id: string;
+  _id: string;
+  clientId: string;
+  restaurantId: string;
   items: Array<{
     name: string;
     quantity: number;
   }>;
-  status: "pending" | "preparing" | "ready" | "delivered";
+  status: DeliveryStatus;
   customerName: string;
-  orderTime: string;
+  totalAmount: number;
+  createdAt: Date;
+  updatedAt: Date;
   priority: boolean;
 }
 
-const SAMPLE_ORDERS: Order[] = [
-  {
-    id: "1",
-    items: [
-      { name: "Margherita Pizza", quantity: 2 },
-      { name: "Caesar Salad", quantity: 1 }
-    ],
-    status: "pending",
-    customerName: "John Doe",
-    orderTime: "2024-02-20T10:30:00",
-    priority: false
-  }
-];
-
 const KitchenDashboard = () => {
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>(SAMPLE_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const token = getAuthToken();
+  const decodedToken = token ? jwtDecode<JWTPayload>(token) : null;
+  const restaurantId = decodedToken?.id;
 
   const updateOrderStatus = (orderId: string, newStatus: Order["status"]) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
-    );
+    const updateOrderStatus = async () => {
+      fetch(`${environment.apiEndpoint}/orders/byId/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      }).then((response) => {
+        if (!response.ok) {
+          toast({
+            title: "Error",
+            description: "Failed to update order status",
+            variant: "destructive"
+          });
 
-    toast({
-      title: "Order Updated",
-      description: `Order #${orderId} status changed to ${newStatus}`
-    });
+          throw new Error("Failed to update order status");
+        }
+
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order._id === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+    
+        toast({
+          title: "Order Updated",
+          description: `Order #${orderId.substring(orderId.length-4, orderId.length)} status changed to ${newStatus}`
+        });
+        return response.json();
+      });
+    };
+    
+    updateOrderStatus();
   };
 
-  const togglePriority = (orderId: string) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, priority: !order.priority } : order
-      )
-    );
-  };
+  useEffect(() => {
+    const fetchOrders = async () => {
+        try {
+            const response = await fetch(
+                `${environment.apiEndpoint}/orders/restaurant/${restaurantId}`,
+                {
+                    headers: {
+                        'Authorization': getAuthToken() || ''
+                    }
+                }
+            );
+            if (!response.ok) throw new Error('Failed to fetch orders');
+            const data = await response.json();
+            console.log(data.data);
+            setOrders(data.data.length > 0 ? data.data.sort((a: Order, b: Order) =>
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            ) : []);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            toast({
+                title: "Error",
+                description: "Failed to fetch orders",
+                variant: "destructive"
+            });
+        }
+    };
+
+    fetchOrders();
+
+    const intervalId = setInterval(fetchOrders, 3000);
+
+    return () => clearInterval(intervalId);
+}, [restaurantId, toast]);
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -60,16 +108,10 @@ const KitchenDashboard = () => {
       
       <div className="grid gap-6">
         {orders.map((order) => (
-          <Card key={order.id} className={`${order.priority ? 'border-red-500 border-2' : ''}`}>
+          <Card key={order._id} className={`${order.priority ? 'border-red-500 border-2' : ''}`}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>Order #{order.id}</span>
-                <Button
-                  variant={order.priority ? "destructive" : "outline"}
-                  onClick={() => togglePriority(order.id)}
-                >
-                  {order.priority ? "High Priority" : "Set Priority"}
-                </Button>
+                <span>Order #{order._id.substring(order._id.length-4, order._id.length)}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -77,7 +119,7 @@ const KitchenDashboard = () => {
                 <div>
                   <p className="font-semibold">Customer: {order.customerName}</p>
                   <p className="text-sm text-gray-600">
-                    Ordered at: {new Date(order.orderTime).toLocaleString()}
+                    Ordered at: {new Date(order.createdAt).toLocaleString()}
                   </p>
                 </div>
                 
@@ -85,7 +127,7 @@ const KitchenDashboard = () => {
                   <h3 className="font-semibold mb-2">Items:</h3>
                   <ul className="space-y-2">
                     {order.items.map((item) => (
-                      <li key={`${order.id}-${item.name}`}>
+                      <li key={`${order._id}-${item.name}`}>
                         {item.quantity}x {item.name}
                       </li>
                     ))}
@@ -94,16 +136,22 @@ const KitchenDashboard = () => {
                 
                 <div className="flex space-x-2">
                   <Button
-                    onClick={() => updateOrderStatus(order.id, "preparing")}
+                    onClick={() => updateOrderStatus(order._id, DeliveryStatus.IN_KITCHEN)}
                     disabled={order.status !== "pending"}
                   >
                     Start Preparing
                   </Button>
                   <Button
-                    onClick={() => updateOrderStatus(order.id, "ready")}
-                    disabled={order.status !== "preparing"}
+                    onClick={() => updateOrderStatus(order._id, DeliveryStatus.READY_FOR_DELIVERY)}
+                    disabled={order.status !== DeliveryStatus.IN_KITCHEN}
                   >
                     Mark as Ready
+                  </Button>
+                  <Button
+                    onClick={() => updateOrderStatus(order._id, DeliveryStatus.IN_TRANSIT)}
+                    disabled={order.status !== DeliveryStatus.ASSIGNED}
+                  >
+                    Mark as Picked up
                   </Button>
                 </div>
               </div>

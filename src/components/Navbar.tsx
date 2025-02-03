@@ -33,24 +33,26 @@ const Navbar = () => {
 
           {/* Desktop menu */}
           <div className="hidden md:flex space-x-4">
-            <Button variant="ghost" asChild>
-              {!isRestaurant() && !isDelivery() ? <Link to="/restaurants">Restaurants</Link> : '' }
-            </Button>
-            {
-              isRestaurant() ?
-              <>
-                <Button variant="ghost" asChild>
-                  <Link to="/restaurant/dashboard">Orders</Link>
-                </Button>
+            {!isRestaurant() && !isDelivery() && (
+              <Button variant="ghost" asChild>
+                <Link to="/restaurants">Restaurants</Link>
+              </Button>)
+            }
+            {isRestaurant() && (
+              <Button variant="ghost" asChild>
+                <Link to="/restaurant/dashboard">Orders</Link>
+              </Button>)
+            }
+            {isRestaurant() && (
                 <Button variant="ghost" asChild>
                   <Link to="/restaurant/dishes">Dishes</Link>
-                </Button>
-              </>
-              : ''
+                </Button>)
             }
-            <Button variant="ghost" asChild>
-              {!isAuthenticated() ? <Link to="/partner">Partner with Us</Link> : ''}
-            </Button>
+            {!isAuthenticated() && (
+              <Button variant="ghost" asChild>
+                <Link to="/partner">Partner with Us</Link>
+              </Button>)
+            }
             {
               !isAuthenticated() ?
               <Button asChild>
@@ -62,32 +64,44 @@ const Navbar = () => {
               </Button>
             }
           </div>
+        </div>
 
-          {/* Mobile menu */}
-          {isMenuOpen && (
-            <div className="hidden md:flex space-x-4">
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 space-y-2 animate-fade-in">
+            {!isRestaurant() && !isDelivery() &&(
               <Button variant="ghost" asChild className="w-full justify-start">
-                {!isRestaurant() && !isDelivery() ? <Link to="/restaurants">Restaurants</Link> : '' }
-              </Button>
-              <Button variant="ghost" asChild className="w-full justify-start">
-                <Link to="/orders">Orders</Link>
-              </Button>
-              <Button variant="ghost" asChild className="w-full justify-start">
-                {!isAuthenticated() ? <Link to="/partner">Partner with Us</Link> : ''}
-              </Button>
-              {
-                !isAuthenticated() ?
+                <Link to="/restaurants">Restaurants</Link>
+              </Button>)
+            }
+            {isRestaurant() &&(
+                <Button variant="ghost" asChild className="w-full justify-start">
+                  <Link to="/restaurant/dashboard">Orders</Link>
+                </Button>)
+            }
+            {isRestaurant() && (
+                <Button variant="ghost" asChild className="w-full justify-start">
+                  <Link to="/restaurant/dishes">Dishes</Link>
+                </Button>)
+            }
+            {
+              !isAuthenticated() && (
+                <Button variant="ghost" asChild className="w-full justify-start">
+                  <Link to="/partner">Partner with Us</Link> 
+                </Button>)
+            }
+            {
+              !isAuthenticated() ? (
                 <Button asChild className="w-full justify-start">
                   <Link to="/login">Login</Link>
-                </Button>
-                :
-                <Button asChild onClick={() => logout()} className="w-full justify-start">
-                  <a href="/">Log out</a>
-                </Button>
-              }
-            </div>
-          )}
-        </div>
+              </Button>)
+              : (
+              <Button asChild onClick={() => logout()} className="w-full justify-start">
+                <a href="/">Log out</a>
+              </Button>)
+            }
+          </div>
+        )}
       </div>
     </nav>
   );

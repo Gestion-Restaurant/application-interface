@@ -50,7 +50,7 @@ const ManageDishes = () => {
     useEffect(() => {
         const fetchDishes = async () => {
             try {
-                const response = await fetch(`${environment.apiEndpoint}kitchen/dishes/restaurant/${restaurantId}`);
+                const response = await fetch(`${environment.apiEndpoint}/kitchen/dishes/restaurant/${restaurantId}`);
     
                 if (!response.ok) {
                     throw new Error('Failed to fetch dishes');
@@ -236,7 +236,7 @@ const ManageDishes = () => {
                             }}
                             className="bg-primary hover:bg-primary/90"
                         >
-                        <PlusCircle className="mr-2 h-4 w-4" />
+                            <PlusCircle className="mr-2 h-4 w-4" />
                             Add New Dish
                         </Button>
                     </DialogTrigger>

@@ -1,9 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { isClient, isDelivery, isRestaurant } from "@/services/auth.service";
 import { Package, Truck, UserPlus } from "lucide-react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
+  useEffect(() => {
+    if (isRestaurant()) {
+      window.location.href = "/restaurant/dashboard";
+    }
+    if (isDelivery()) {
+      window.location.href = "/delivery/dashboard";
+    }
+    if (isClient()) {
+      window.location.href = "/restaurants";
+    }
+  });
   return (
     <div className="min-h-screen">
       {/* Hero Section */}

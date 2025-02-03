@@ -18,13 +18,14 @@ function Register() {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [name, setName] = React.useState('');
+    const [address, setAddress] = React.useState('');
 
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             // Call register API
-            await register(email, password, name);
+            await register(email, password, name, 'client', address);
             toast({
                 title: 'Register successful',
                 description: `Welcome! You are registered as a client`,
@@ -59,6 +60,15 @@ function Register() {
                             placeholder="Name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <Input
+                            type="text"
+                            placeholder="Address"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
                             required
                         />
                     </div>
