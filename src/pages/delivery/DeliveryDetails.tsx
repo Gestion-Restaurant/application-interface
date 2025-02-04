@@ -11,6 +11,7 @@ import JWTPayload from "@/types/JWTPayload";
 
 interface DeliveryDetails {
     _id: string;
+    orderId: string;
     customerName: string;
     address: string;
     status: DeliveryStatus;
@@ -24,10 +25,28 @@ const DeliveryDetails = () => {
     const { toast } = useToast();
 
     const updateStatus = (newStatus: DeliveryDetails["status"]) => {
-        setDelivery(prev => ({ ...prev, status: newStatus }));
-        toast({
-            title: "Status Updated",
-            description: `Delivery status changed to ${newStatus.replace('_', ' ')}`
+        fetch(`${environment.apiEndpoint}/orders/byId/${delivery.orderId}`, {
+            method: 'PATCH',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ status: newStatus })
+        }).then(response => {
+            if (!response.ok) throw new Error('Failed to update delivery status');
+            return response.json();
+        }).then(data => {
+            setDelivery(data);
+            toast({
+                title: "Status Updated",
+                description: `Delivery status changed to ${newStatus.replace('_', ' ')}`
+            });
+            setDelivery(prev => ({ ...prev, status: newStatus }));
+            window.location.href = "/delivery/dashboard";
+        }).catch(error => {
+            toast({
+                title: "Error",
+                description: error.message,
+            });
         });
     };
 
@@ -73,7 +92,7 @@ const DeliveryDetails = () => {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Package className="h-6 w-6" />
-                            Order #{delivery._id}
+                            Order #{delivery.orderId.substring(delivery.orderId.length - 4, delivery.orderId.length)}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -109,7 +128,7 @@ const DeliveryDetails = () => {
                                 <Button 
                                     className="w-full"
                                     disabled={delivery.status !== DeliveryStatus.IN_TRANSIT}
-                                    onClick={() => updateStatus(DeliveryStatus.IN_TRANSIT)}
+                                    onClick={() => updateStatus(DeliveryStatus.DELIVERED)}
                                 >
                                     Mark as {getNextStatus()?.replace('_', ' ')}
                                 </Button>
