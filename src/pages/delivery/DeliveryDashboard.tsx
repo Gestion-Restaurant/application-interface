@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { DeliveryStatus } from "@/types/deliveryStatusEnum";
 import { environment } from "@/environment/environment";
+import { getAuthToken } from "@/services/auth.service";
+import { jwtDecode } from "jwt-decode";
+import JWTPayload from "@/types/JWTPayload";
 
 interface DeliveryOrder {
   _id: string;
@@ -16,64 +19,95 @@ interface DeliveryOrder {
   orderId: string;
 }
 
-const SAMPLE_DELIVERY_ORDERS: DeliveryOrder[] = [
-  {
-    _id: "1",
-    address: "123 Main St, City",
-    status: DeliveryStatus.READY_FOR_DELIVERY,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    clientId: "1",
-    deliveryPersonId: "1",
-    orderId: "1"
-  }
-];
-
 const DeliveryDashboard = () => {
+
+  const token = getAuthToken();
+  const decodedToken = token ? jwtDecode<JWTPayload>(token) : null;
+  const userId = decodedToken?.id;
+
   const { toast } = useToast();
   const [deliveries, setDeliveries] = useState<DeliveryOrder[]>([]);
 
-  const updateDeliveryStatus = (orderId: string, newStatus: DeliveryOrder["status"]) => {
-    setDeliveries(prevDeliveries =>
-      prevDeliveries.map(delivery =>
-        delivery._id === orderId ? { ...delivery, status: newStatus } : delivery
-      )
-    );
+  const updateDeliveryStatusApi = async (orderId: string, newStatus: DeliveryOrder["status"]) => {
+    fetch(`${environment.apiEndpoint}/delivery/assign/${orderId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        deliveryPersonId: userId
+      }),
+    }).then((response) => {
+      if (!response.ok) {
+        toast({
+          title: "Error",
+          description: "Failed to update delivery status",
+          variant: "destructive"
+        });
 
-    toast({
-      title: "Delivery Updated",
-      description: `Order #${orderId} status changed to ${newStatus.replace('_', ' ')}`
+        throw new Error("Failed to update delivery status");
+      }
+
+      window.location.href = '/delivery-details/';
     });
+  }
+
+  const updateDeliveryStatus = (orderId: string, newStatus: DeliveryOrder["status"]) => {
+    console.log(orderId);
+    updateDeliveryStatusApi(orderId, newStatus);
+  };
+
+  const fetchDeliveries = async () => {
+    try {
+      const response = await fetch(`${environment.apiEndpoint}/delivery`,
+        {
+          headers: {
+            "Content-Type": "application/json"
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch deliveries");
+      }
+
+      const data = await response.json();
+      setDeliveries(data);
+    } catch (error) {
+      console.error("Error fetching deliveries", error);
+    }
+  };
+
+  const verifyAssigned = async () => {
+    try {
+      const response = await fetch(`${environment.apiEndpoint}/delivery/deliveryPerson/${userId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": getAuthToken() || ''
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch assigned deliveries');
+      const data = await response.json();
+      if (data.length > 0) {
+        window.location.href = '/delivery-details/';
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   useEffect(() => {
-    const fetchDeliveries = async () => {
-      try {
-        const response = await fetch(`${environment.apiEndpoint}/delivery`,
-          {
-            headers: {
-              "Content-Type": "application/json"
-            },
-          }
-        );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch deliveries");
-        }
-
-        const data = await response.json();
-        setDeliveries(data);
-      } catch (error) {
-        console.error("Error fetching deliveries", error);
-      }
-    };
+    verifyAssigned();
 
     fetchDeliveries();
 
     const interfalId = setInterval(fetchDeliveries, 5000);
 
     return () => clearInterval(interfalId);
-  }, []);
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">

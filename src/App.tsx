@@ -18,6 +18,9 @@ import RestaurantsPage from "./pages/RestaurantsPage";
 import RestaurantDishes from "./pages/RestaurantDishes";
 import { CartProvider } from "./contexts/CartContext";
 import ManageDishes from './pages/restaurant/ManageDishes';
+import DeliveryTracking from "./pages/delivery/DeliveryTracking";
+import { CustomerRoute } from "./components/CustomerRoute";
+import DeliveryDetails from "./pages/delivery/DeliveryDetails";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +84,20 @@ const App = () => (
             />
             <Route path="/restaurants" element={<RestaurantsPage />} />
             <Route path="/restaurants/:id/dishes" element={<RestaurantDishes />} />
+            <Route path="/delivery-tracking"
+              element={
+                <CustomerRoute>
+                  <DeliveryTracking />
+                </CustomerRoute>
+              }
+            />
+            <Route path="/delivery-details"
+              element={
+                <DeliveryRoute>
+                  <DeliveryDetails />
+                </DeliveryRoute>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </CartProvider>
