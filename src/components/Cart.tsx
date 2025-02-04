@@ -51,6 +51,7 @@ export const Cart = ({ restaurantId }: { restaurantId: string }) => {
                 description: "Your order has been created successfully"
             });
             clearCart();
+            window.location.href = "/#/delivery-tracking";
     } catch (error) {
             console.error("Error creating order:", error);
             toast({
