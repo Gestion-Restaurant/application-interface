@@ -1,14 +1,56 @@
 import { Button } from "@/components/ui/button";
-import { isAuthenticated, isDelivery, isRestaurant, logout } from "@/services/auth.service";
+import { getAuthToken, isAuthenticated, isClient, isDelivery, isRestaurant, logout } from "@/services/auth.service";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { environment } from "@/environment/environment";
+import { jwtDecode } from "jwt-decode";
+import JWTPayload from "@/types/JWTPayload";
+import { toast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  const token = getAuthToken();
+  const decodedToken = token ? jwtDecode<JWTPayload>(token) : null;
+  const userId = decodedToken?.id;
+  const userRole = decodedToken?.role;
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch(
+        `${environment.apiEndpoint}/orders/ByIdClient/${userId}`,
+        {
+          headers: {
+            'Authorization': token
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const data = await response.json();
+      if (data.data.length > 0 && window.location.href !== "/#/delivery-tracking") {
+        window.location.href = "/#/delivery-tracking";
+      } else if (data.data.length === 0 && window.location.href === "/#/delivery-tracking") {
+        window.location.href = "/#/";
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated() && isClient()) {
+      fetchOrders();
+    }
+  }, []);
 
   return (
     <nav className="bg-white border-b">

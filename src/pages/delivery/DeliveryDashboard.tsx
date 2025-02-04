@@ -48,7 +48,7 @@ const DeliveryDashboard = () => {
         throw new Error("Failed to update delivery status");
       }
 
-      window.location.href = '/delivery-details/';
+      window.location.href = '/#/delivery-details/';
     });
   }
 
@@ -91,7 +91,7 @@ const DeliveryDashboard = () => {
       if (!response.ok) throw new Error('Failed to fetch assigned deliveries');
       const data = await response.json();
       if (data.length > 0) {
-        window.location.href = '/delivery-details/';
+        window.location.href = '/#/delivery-details/';
       }
     } catch (error) {
       console.error(error);

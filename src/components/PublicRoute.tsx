@@ -3,7 +3,7 @@ import { isAuthenticated } from "../services/auth.service";
 
 export const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     if (isAuthenticated()) {
-        return <Navigate to="/" replace />;
+        return <Navigate to="/#" replace />;
     }
     return <>{children}</>;
 };

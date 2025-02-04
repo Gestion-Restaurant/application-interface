@@ -41,7 +41,7 @@ const DeliveryDetails = () => {
                 description: `Delivery status changed to ${newStatus.replace('_', ' ')}`
             });
             setDelivery(prev => ({ ...prev, status: newStatus }));
-            window.location.href = "/delivery/dashboard";
+            window.location.href = "/#/delivery/dashboard";
         }).catch(error => {
             toast({
                 title: "Error",

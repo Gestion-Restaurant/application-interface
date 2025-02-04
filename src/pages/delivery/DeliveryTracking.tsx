@@ -1,69 +1,89 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Truck, User, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DeliveryStatus } from "@/types/deliveryStatusEnum";
+import { environment } from "@/environment/environment";
+import { getAuthToken } from "@/services/auth.service";
+import { jwtDecode } from "jwt-decode";
+import JWTPayload from "@/types/JWTPayload";
 
-interface DeliveryStatus {
-  status: "preparing" | "picked_up" | "on_the_way" | "delivered";
-  timestamp: string;
-}
-
-interface DeliveryDetails {
-  id: string;
-  status: DeliveryStatus;
-  deliveryGuy: {
-    name: string;
-    phone: string;
-    rating: number;
-  };
-  estimatedDeliveryTime: string;
-  address: string;
+interface Order {
+  _id: string;
+  clientId: string;
+  restaurantId: string;
   items: Array<{
     name: string;
     quantity: number;
   }>;
+  status: DeliveryStatus;
+  customerName: string;
+  totalAmount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  priority: boolean;
 }
 
-// Sample data - in a real app, this would come from an API
-const sampleDelivery: DeliveryDetails = {
-  id: "DEL123",
-  status: {
-    status: "on_the_way",
-    timestamp: new Date().toISOString(),
-  },
-  deliveryGuy: {
-    name: "John Doe",
-    phone: "+1 234 567 8900",
-    rating: 4.8,
-  },
-  estimatedDeliveryTime: "2024-02-21T15:30:00",
-  address: "123 Main St, Anytown, CA 12345",
-  items: [
-    { name: "Margherita Pizza", quantity: 2 },
-    { name: "Garlic Bread", quantity: 1 },
-  ],
-};
-
 const DeliveryTracking = () => {
-  const [delivery] = useState<DeliveryDetails>(sampleDelivery);
   const { toast } = useToast();
+  const [order, setOrder] = useState<Order>();
+  const token = getAuthToken();
+  const decodedToken = token ? jwtDecode<JWTPayload>(token) : null;
+  const userId = decodedToken?.id;
 
-  const getStatusColor = (status: DeliveryStatus["status"]) => {
+  const getStatusColor = (status: DeliveryStatus) => {
     switch (status) {
-      case "preparing":
+      case DeliveryStatus.IN_KITCHEN:
+      case DeliveryStatus.READY_FOR_DELIVERY:
         return "text-yellow-500";
-      case "picked_up":
+      case DeliveryStatus.ASSIGNED:
         return "text-blue-500";
-      case "on_the_way":
+      case DeliveryStatus.IN_TRANSIT:
         return "text-purple-500";
-      case "delivered":
+      case DeliveryStatus.DELIVERED:
         return "text-green-500";
       default:
         return "text-gray-500";
     }
   };
 
-  return (
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch(
+        `${environment.apiEndpoint}/orders/ByIdClient/${userId}`,
+        {
+          headers: {
+            'Authorization': token
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const data = await response.json();
+      setOrder(data.data.length > 0 ? data.data[0] : null);
+      if (data.data.length === 0) {
+        window.location.href = "/#/restaurants";
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return ( order &&
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Delivery Tracking</h1>
       
@@ -71,41 +91,19 @@ const DeliveryTracking = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Truck className={getStatusColor(delivery.status.status)} />
-              Order #{delivery.id}
+              <Truck className={getStatusColor(order.status)} />
+              Order #{order._id.substring(order._id.length-4, order._id.length)}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-2">
-              <Clock className="w-5 h-5 mt-1" />
-              <div>
-                <p className="font-semibold">Estimated Delivery Time</p>
-                <p>{new Date(delivery.estimatedDeliveryTime).toLocaleString()}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <MapPin className="w-5 h-5 mt-1" />
-              <div>
-                <p className="font-semibold">Delivery Address</p>
-                <p>{delivery.address}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2">
               <User className="w-5 h-5 mt-1" />
-              <div>
-                <p className="font-semibold">Delivery Partner</p>
-                <p>{delivery.deliveryGuy.name}</p>
-                <p className="text-sm text-gray-600">Rating: {delivery.deliveryGuy.rating} ⭐</p>
-                <p className="text-sm text-gray-600">{delivery.deliveryGuy.phone}</p>
-              </div>
             </div>
 
             <div>
               <h3 className="font-semibold mb-2">Order Items:</h3>
               <ul className="space-y-2">
-                {delivery.items.map((item, index) => (
+                {order.items.map((item, index) => (
                   <li key={index}>
                     {item.quantity}x {item.name}
                   </li>
@@ -115,13 +113,13 @@ const DeliveryTracking = () => {
 
             <div className="mt-4">
               <div className="flex items-center gap-2">
-                <CheckCircle className={getStatusColor(delivery.status.status)} />
+                <CheckCircle className={getStatusColor(order.status)} />
                 <span className="font-semibold capitalize">
-                  Status: {delivery.status.status.replace('_', ' ')}
+                  Status: {order.status.replace('_', ' ')}
                 </span>
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                Last updated: {new Date(delivery.status.timestamp).toLocaleString()}
+                Last updated: {new Date(order.updatedAt).toLocaleString()}
               </p>
             </div>
           </CardContent>
