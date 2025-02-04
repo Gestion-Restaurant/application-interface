@@ -47,6 +47,7 @@ const Navbar = () => {
   };
 
   useEffect(() => {
+    console.log(isClient());
     if (isAuthenticated() && isClient()) {
       fetchOrders();
     }
