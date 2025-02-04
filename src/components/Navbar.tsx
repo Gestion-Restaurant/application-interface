@@ -47,9 +47,16 @@ const Navbar = () => {
   };
 
   useEffect(() => {
-    console.log(isClient());
     if (isAuthenticated() && isClient()) {
       fetchOrders();
+
+      const interval = setInterval(() => {
+        if (window.location.href !== "/#/delivery-tracking") {
+          fetchOrders();
+        }
+      }, 5000);
+
+      return () => clearInterval(interval);
     }
   }, []);
 
